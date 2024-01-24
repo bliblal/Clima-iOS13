@@ -9,12 +9,48 @@
 import Foundation
 
 struct WeatherManager {
-    var city = ""
     
-    var weatherURL = "https://api.openweathermap.org/data/2.5/weather?q=islamabad&appid=d7ead00526eb3a207f1332871cca99c2&units=metric"
+    var weatherURL = "https://api.openweathermap.org/data/2.5/weather?&appid=d7ead00526eb3a207f1332871cca99c2&units=metric"
     
-    func fetchWeather(city: String){
-        var finalURL = "\(weatherURL)&q=\(city)"
+    func fetchWeather(_ city: String, _  units: String = "metric"){
+        let finalURL = "\(weatherURL)&q=\(city)"
         print(finalURL)
+        performCall(url: finalURL)
     }
+    
+    func performCall(url: String){
+        //create url
+        if let url = URL(string: url){
+            //create a session
+            let session = URLSession(configuration: .default)
+            
+            //create a task (trailing closure used here)
+            let task = session.dataTask(with: url) { (data: Data?, response: URLResponse?, error: Error?) in
+                if (error != nil) {
+                    print(error!)
+                    return
+                }
+                if let safedata = data {
+                    pasreJSON(data: safedata)
+                }
+            }
+            
+            //start the task
+            task.resume()
+        }
+    }
+    
+    func pasreJSON(data: Data){
+        let decoder = JSONDecoder()
+        do {
+            let decodeddata = try decoder.decode(WeatherData.self, from: data)
+            print(decodeddata.name)
+        } catch {
+            print(error)
+        }
+    }
+    
+    
+    //completion handler function
+    
 }
