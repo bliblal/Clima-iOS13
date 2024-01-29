@@ -8,7 +8,13 @@
 
 import Foundation
 
+protocol WeatherManagerDelegate {
+    func didUpdateWeather(weather: WeatherModel)
+}
+
 struct WeatherManager {
+    
+    var delegate: WeatherManagerDelegate?
     
     var weatherURL = "https://api.openweathermap.org/data/2.5/weather?&appid=d7ead00526eb3a207f1332871cca99c2&units=metric"
     
@@ -31,7 +37,8 @@ struct WeatherManager {
                     return
                 }
                 if let safedata = data {
-                    pasreJSON(data: safedata)
+                    let weatherdata = pasreJSON(data: safedata)
+                    delegate?.didUpdateWeather(weather: weatherdata!)
                 }
             }
             
@@ -40,17 +47,17 @@ struct WeatherManager {
         }
     }
     
-    func pasreJSON(data: Data){
+    func pasreJSON(data: Data) -> WeatherModel? {
         let decoder = JSONDecoder()
         do {
             let decodeddata = try decoder.decode(WeatherData.self, from: data)
-            print(decodeddata.name)
+            let weathermodel = WeatherModel(conditionId: decodeddata.weather[0].id, cityName: decodeddata.name, temprature: decodeddata.main.temp)
+            return weathermodel
         } catch {
             print(error)
+            return nil
+            
         }
     }
-    
-    
-    //completion handler function
     
 }
