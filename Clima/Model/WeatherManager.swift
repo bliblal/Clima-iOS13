@@ -7,12 +7,16 @@
 //
 
 import Foundation
+import CoreLocation
 
 protocol WeatherManagerDelegate {
-    func didUpdateWeather(weather: WeatherModel)
+    func didUpdateWeather(_ weathermanager: WeatherManager, weather: WeatherModel)
+    func didFailWithError(error: Error)
 }
 
 struct WeatherManager {
+    
+    var defaultweather = WeatherModel(conditionId: 801, cityName: "Error", temprature: 0.00)
     
     var delegate: WeatherManagerDelegate?
     
@@ -20,6 +24,12 @@ struct WeatherManager {
     
     func fetchWeather(_ city: String, _  units: String = "metric"){
         let finalURL = "\(weatherURL)&q=\(city)"
+        print(finalURL)
+        performCall(url: finalURL)
+    }
+    
+    func fetchWeathercoord(_ lat: CLLocationDegrees, _ lon: CLLocationDegrees , _ units: String = "metric"){
+        let finalURL = "\(weatherURL)&lat=\(lat)&lon=\(lon)"
         print(finalURL)
         performCall(url: finalURL)
     }
@@ -33,12 +43,12 @@ struct WeatherManager {
             //create a task (trailing closure used here)
             let task = session.dataTask(with: url) { (data: Data?, response: URLResponse?, error: Error?) in
                 if (error != nil) {
-                    print(error!)
+                    delegate?.didFailWithError(error: error!)
                     return
                 }
                 if let safedata = data {
                     let weatherdata = pasreJSON(data: safedata)
-                    delegate?.didUpdateWeather(weather: weatherdata!)
+                    delegate?.didUpdateWeather(self, weather: weatherdata ?? defaultweather)
                 }
             }
             
@@ -54,7 +64,7 @@ struct WeatherManager {
             let weathermodel = WeatherModel(conditionId: decodeddata.weather[0].id, cityName: decodeddata.name, temprature: decodeddata.main.temp)
             return weathermodel
         } catch {
-            print(error)
+            delegate?.didFailWithError(error: error)
             return nil
             
         }
